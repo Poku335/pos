@@ -1,11 +1,11 @@
-// routes/productRoutes.js
 const express = require('express');
-const { addProduct, getProducts, updateProduct, deleteProduct } = require('../controllers/productcontroller');
+const { addProduct, getProducts, getProductImage, updateProduct, deleteProduct, upload } = require('../controllers/productcontroller');
 const router = express.Router();
 
-router.post('/add', addProduct); // เพิ่มสินค้าใหม่
-router.get('/', getProducts); // ดึงรายการสินค้าทั้งหมด
-router.put('/:id', updateProduct); // อัปเดต
-router.delete('/:id', deleteProduct); // ลบสินค้า
+router.post('/add', upload.single('image'), addProduct);
+router.get('/', getProducts);
+router.get('/:id/image', getProductImage);
+router.put('/:id', upload.single('image'), updateProduct);
+router.delete('/:id', deleteProduct);
 
 module.exports = router;

@@ -1,7 +1,21 @@
-const mongoose = require('mongoose');
+const db = require('../config/db');
 
-const categorySchema = new mongoose.Schema({
-  name: { type: String, required: true },
-});
+const Category = {
+  findAll: () => db.prepare('SELECT * FROM categories').all(),
 
-module.exports = mongoose.model('Category', categorySchema);
+  findById: (id) => db.prepare('SELECT * FROM categories WHERE id = ?').get(id),
+
+  create: (name) => {
+    const { lastInsertRowid } = db.prepare('INSERT INTO categories (name) VALUES (?)').run(name);
+    return Category.findById(lastInsertRowid);
+  },
+
+  update: (id, name) => {
+    db.prepare('UPDATE categories SET name = ? WHERE id = ?').run(name, id);
+    return Category.findById(id);
+  },
+
+  delete: (id) => db.prepare('DELETE FROM categories WHERE id = ?').run(id).changes,
+};
+
+module.exports = Category;

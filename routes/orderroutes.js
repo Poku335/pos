@@ -1,8 +1,9 @@
 const express = require('express');
-const { openTable, closeTable } = require('../controllers/ordercontroller');
+const { getOrders, openTable, closeTable } = require('../controllers/ordercontroller');
 const router = express.Router();
 
-router.post('/open', openTable); // เปิดโต๊ะใหม่
-router.put('/close/:id', closeTable); // ปิดบิล
+router.get('/', getOrders);
+router.post('/open', openTable);
+router.put('/close/:id', closeTable);
 
 module.exports = router;

@@ -1,15 +1,23 @@
-const mongoose = require('mongoose');
+const db = require('../config/db');
 
-const orderDetailSchema = new mongoose.Schema({
-  orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', required: true },
-  productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
-  quantity: { type: Number, required: true },
-  price: { type: Number, required: true },
-  status: { 
-    type: String, 
-    enum: ['pending', 'preparing', 'served', 'cancelled'], //รอดำเนินการ, กําลังเตรียม, เสิร์ฟ ,ยกเลิก
-    default: 'pending' 
-  }
-});
+const OrderDetail = {
+  findById: (id) => db.prepare('SELECT * FROM order_details WHERE id = ?').get(id),
 
-module.exports = mongoose.model('OrderDetail', orderDetailSchema);
+  findByOrder: (orderId) => db.prepare('SELECT * FROM order_details WHERE orderId = ?').all(orderId),
+
+  create: ({ orderId, productId, quantity, price }) => {
+    const { lastInsertRowid } = db.prepare(
+      'INSERT INTO order_details (orderId, productId, quantity, price) VALUES (?, ?, ?, ?)'
+    ).run(orderId, productId, quantity, price);
+    return OrderDetail.findById(lastInsertRowid);
+  },
+
+  updateStatus: (id, status) => {
+    db.prepare('UPDATE order_details SET status = ? WHERE id = ?').run(status, id);
+    return OrderDetail.findById(id);
+  },
+
+  delete: (id) => db.prepare('DELETE FROM order_details WHERE id = ?').run(id).changes,
+};
+
+module.exports = OrderDetail;

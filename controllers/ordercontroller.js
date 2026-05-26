@@ -1,28 +1,29 @@
 const Order = require('../models/order');
 
-// เปิดโต๊ะใหม่
-exports.openTable = async (req, res) => {
+exports.getOrders = (req, res) => {
   try {
-    const newOrder = new Order({
-      tableNumber: req.body.tableNumber,
-      customerCount: req.body.customerCount
-    });
-    const order = await newOrder.save();
-    res.status(201).json(order);
+    res.json(Order.findAll());
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.openTable = (req, res) => {
+  try {
+    const { tableNumber, customerCount } = req.body;
+    if (!tableNumber || !customerCount) return res.status(400).json({ error: 'tableNumber and customerCount are required' });
+    res.status(201).json(Order.create({ tableNumber, customerCount }));
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
 
-// ปิดบิล (รวมยอด)
-exports.closeTable = async (req, res) => {
+exports.closeTable = (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const order = Order.findById(parseInt(req.params.id));
     if (!order) return res.status(404).json({ message: 'Order not found' });
-
-    order.status = 'closed';
-    await order.save();
-    res.status(200).json({ message: 'Table closed successfully', total: order.totalPrice });
+    const closed = Order.close(order.id);
+    res.json({ message: 'Table closed successfully', total: closed.totalPrice });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

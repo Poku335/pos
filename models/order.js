@@ -1,11 +1,25 @@
-const mongoose = require('mongoose');
+const db = require('../config/db');
 
-const orderSchema = new mongoose.Schema({
-  tableNumber: { type: Number, required: true }, // หมายเลขโต๊ะ
-  customerCount: { type: Number, required: true }, // จำนวนลูกค้าในโต๊ะ
-  status: { type: String, default: 'open' }, // สถานะบิล: open หรือ closed
-  totalPrice: { type: Number, default: 0 }, // ยอดรวมทั้งหมด
-  createdAt: { type: Date, default: Date.now }
-});
+const Order = {
+  findAll: () => db.prepare('SELECT * FROM orders').all(),
 
-module.exports = mongoose.model('Order', orderSchema);
+  findById: (id) => db.prepare('SELECT * FROM orders WHERE id = ?').get(id),
+
+  create: ({ tableNumber, customerCount }) => {
+    const { lastInsertRowid } = db.prepare(
+      'INSERT INTO orders (tableNumber, customerCount) VALUES (?, ?)'
+    ).run(tableNumber, customerCount);
+    return Order.findById(lastInsertRowid);
+  },
+
+  close: (id) => {
+    db.prepare("UPDATE orders SET status = 'closed' WHERE id = ?").run(id);
+    return Order.findById(id);
+  },
+
+  addToTotal: (id, amount) => {
+    db.prepare('UPDATE orders SET totalPrice = totalPrice + ? WHERE id = ?').run(amount, id);
+  },
+};
+
+module.exports = Order;

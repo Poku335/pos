@@ -1,9 +1,10 @@
 const express = require('express');
-const { addOrderItem, updateOrderItemStatus, deleteOrderItem } = require('../controllers/orderDetailController');
+const { getByOrder, addOrderItem, updateOrderItemStatus, deleteOrderItem } = require('../controllers/orderdetail');
 const router = express.Router();
 
-router.post('/add', addOrderItem); // เพิ่มรายการสั่งใหม่
-router.put('/update-status/:id', updateOrderItemStatus); // อัปเดตสถานะของรายการสั่ง
-router.delete('/:id', deleteOrderItem); // ลบรายการสั่ง
+router.get('/by-order/:orderId', getByOrder);
+router.post('/add', addOrderItem);
+router.put('/update-status/:id', updateOrderItemStatus);
+router.delete('/:id', deleteOrderItem);
 
 module.exports = router;

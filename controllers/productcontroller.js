@@ -1,44 +1,71 @@
+const multer = require('multer');
 const Product = require('../models/product');
 
-// เพิ่มสินค้าใหม่
-exports.addProduct = async (req, res) => {
+const upload = multer({ storage: multer.memoryStorage() });
+exports.upload = upload;
+
+exports.addProduct = (req, res) => {
   try {
-    const product = new Product(req.body);
-    await product.save();
+    const { name, price, description, category_id } = req.body;
+    if (!name || price === undefined) return res.status(400).json({ error: 'name and price are required' });
+
+    const product = Product.create({
+      name,
+      description,
+      price: parseFloat(price),
+      category_id: category_id ? parseInt(category_id) : null,
+      image: req.file?.buffer ?? null,
+      image_type: req.file?.mimetype ?? null,
+    });
     res.status(201).json(product);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
 
-// ดึงรายการสินค้าทั้งหมด
-exports.getProducts = async (req, res) => {
+exports.getProducts = (req, res) => {
   try {
-    const products = await Product.find().populate('category');
-    res.status(200).json(products);
+    res.json(Product.findAll());
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-
-// อัปเดต
-exports.updateProduct = async (req, res) => {
+exports.getProductImage = (req, res) => {
   try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    const row = Product.findByIdRaw(req.params.id);
+    if (!row || !row.image) return res.status(404).json({ message: 'Image not found' });
+    res.set('Content-Type', row.image_type || 'application/octet-stream');
+    res.send(row.image);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.updateProduct = (req, res) => {
+  try {
+    const { name, price, description, category_id } = req.body;
+    const fields = {
+      name,
+      description,
+      price: price !== undefined ? parseFloat(price) : undefined,
+      category_id: category_id !== undefined ? parseInt(category_id) : undefined,
+      image: req.file?.buffer,
+      image_type: req.file?.mimetype,
+    };
+    const product = Product.update(parseInt(req.params.id), fields);
     if (!product) return res.status(404).json({ message: 'Product not found' });
-    res.status(200).json(product);
+    res.json(product);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
 
-// ลบ 
-exports.deleteProduct = async (req, res) => {
+exports.deleteProduct = (req, res) => {
   try {
-    const product = await Product.findByIdAndDelete(req.params.id);
-    if (!product) return res.status(404).json({ message: 'Product not found' });
-    res.status(200).json({ message: 'Product deleted successfully' });
+    const deleted = Product.delete(parseInt(req.params.id));
+    if (!deleted) return res.status(404).json({ message: 'Product not found' });
+    res.json({ message: 'Product deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
